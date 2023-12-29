@@ -23,27 +23,6 @@ int ReadLineWithNumber() {
     return result;
 }
 
-vector<string> SplitInToWords(const string& text) {
-    vector<string> words;
-    string word;
-    for (const char ch : text) {
-        if (ch == ' ') {
-            if (!word.empty()) {
-                words.push_back(word);
-                word.clear();
-            }
-        }
-        else {
-            word += ch;
-        }
-    }
-    if (!word.empty()) {
-        words.push_back(word);
-    }
-    return words;
-}
-
-
 struct Document {
     int id;
     double relevance;
@@ -59,9 +38,8 @@ public:
 
     void AddDocument(int document_id, const string& document) {
 
-        vector<string> split = SplitInToWordsNoStop(document);
-        double term_frequency = 1. / split.size();
-        for (const string& word : split) {
+        double term_frequency = 1. / SplitInToWordsNoStop(document).size();
+        for (const string& word : SplitInToWordsNoStop(document)) {
             word_to_document_freqs_[word][document_id] += term_frequency;
         }
         ++document_count_;
@@ -69,7 +47,9 @@ public:
 
     vector<Document> FindTopDocuments(const string& raw_query) const {
         vector<Document> top_documents;
-        Query query = ParseQuery(raw_query);
+        Query query;
+
+        query = ParseQuery(raw_query);
 
         top_documents = FindAllDocuments(query);
 
@@ -92,6 +72,26 @@ private:
     map<string, map<int, double>> word_to_document_freqs_;
     set<string> stop_words_;
     int document_count_ = 0;
+
+    vector<string> SplitInToWords(const string& text) const {
+        vector<string> words;
+        string word;
+        for (const char ch : text) {
+            if (ch == ' ') {
+                if (!word.empty()) {
+                    words.push_back(word);
+                    word.clear();
+                }
+            }
+            else {
+                word += ch;
+            }
+        }
+        if (!word.empty()) {
+            words.push_back(word);
+        }
+        return words;
+    }
 
     vector<string> SplitInToWordsNoStop(const string& text) const {
         vector<string> words;
@@ -130,14 +130,14 @@ private:
         for (const string& plus_word : query.plus_words) {
             if (word_to_document_freqs_.count(plus_word)) {
                 double inverse_document_frequency = ComputInverseDocumentFrequency(plus_word);
-                for (const auto& [word, id_term_frequency] : word_to_document_freqs_.at(plus_word)) {
-                    document_to_relevance[word] += id_term_frequency * inverse_document_frequency;
+                for (const auto& [word, id__term_frequency] : word_to_document_freqs_.at(plus_word)) {
+                    document_to_relevance[word] += id__term_frequency * inverse_document_frequency;
                 }
             }
         }
         for (const string& minus_word : query.minus_words) {
             if (word_to_document_freqs_.count(minus_word)) {
-                for (const auto& [word, id_term_frequency] : word_to_document_freqs_.at(minus_word)) {
+                for (const auto& [word, id__term_frequency] : word_to_document_freqs_.at(minus_word)) {
                     document_to_relevance.erase(word);
                 }
             }
